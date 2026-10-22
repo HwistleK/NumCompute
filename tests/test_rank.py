@@ -97,3 +97,44 @@ def test_percentile_errors():
         percentile([1, 2], 101)
     with pytest.raises(ValueError):
         percentile([1, 2], 50, interpolation="nearest")
+
+
+# ---------- added: input validation and extreme values ----------
+
+def test_rank_rejects_non_numeric():
+    with pytest.raises(TypeError):
+        rank(["a", "b"])
+
+
+def test_rank_integer_dtype_and_nan_along_axis():
+    assert rank([3, 1, 2], method="dense").dtype.kind == "i"
+    X = np.array([[1.0, np.nan], [2.0, 1.0]])
+    r = rank(X, method="dense", axis=1)
+    assert r[0, 0] == 1 and np.isnan(r[0, 1]) and r[1].tolist() == [2, 1]
+
+
+def test_percentile_invalid_q():
+    with pytest.raises(ValueError):
+        percentile([1, 2], np.nan)
+    with pytest.raises(ValueError):
+        percentile([1, 2], [[50]])
+
+
+def test_percentile_negative_axis_and_opposite_infinities():
+    X = np.arange(6.0).reshape(2, 3)
+    assert percentile(X, 50, axis=-1).tolist() == [1.0, 4.0]
+    for interp in ["linear", "midpoint"]:
+        assert np.isnan(percentile([-np.inf, np.inf], 50, interpolation=interp))
+
+
+def test_percentile_no_overflow_with_huge_values():
+    a = [-1e308, 1e308]
+    assert percentile(a, 50) == 0.0
+    assert percentile(a, 50, interpolation="midpoint") == 0.0
+    assert percentile([1e308, 1.5e308], 50) == 1.25e308
+
+
+def test_percentile_interpolation_towards_infinity():
+    # NumPy returns NaN here; the mathematical limit is +inf.
+    assert percentile([0.0, np.inf, np.inf], 75) == np.inf
+    assert percentile([-np.inf, 0.0], 50) == -np.inf
