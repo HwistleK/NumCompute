@@ -19,6 +19,23 @@ def _as_numeric(a, name="a"):
     return arr
 
 
+def _order_key(arr, descending):
+    """Return a key whose ascending order is the requested order of ``arr``.
+
+    Integers are never cast to float (that loses precision above 2**53).
+    For descending order, integers use bitwise NOT (~x = -x - 1), which
+    reverses the order exactly without overflow, also for unsigned types.
+    Floats are negated, so NaN stays NaN and is still sorted last.
+    """
+    if arr.dtype == bool:
+        arr = arr.astype(np.int8)
+    if not descending:
+        return arr
+    if np.issubdtype(arr.dtype, np.integer):
+        return np.invert(arr)
+    return -arr
+
+
 def stable_argsort(a, axis=-1, descending=False):
     """Return indices that stably sort ``a`` along ``axis``.
 
@@ -49,10 +66,9 @@ def stable_argsort(a, axis=-1, descending=False):
     ----------
     Time O(n log n) per slice, space O(n).
     """
-    arr = _as_numeric(a).astype(float, copy=False)
-    # Negating keeps ties in original order (flipping the result would not).
-    key = -arr if descending else arr
-    return np.argsort(key, axis=axis, kind="stable")
+    arr = _as_numeric(a)
+    # Inverting the key keeps ties in original order (flipping the result would not).
+    return np.argsort(_order_key(arr, descending), axis=axis, kind="stable")
 
 
 def stable_sort(a, axis=-1, descending=False):
@@ -136,8 +152,8 @@ def multikey_sort(X, keys, ascending=True, return_indices=False):
         if asc.shape != (len(keys),):
             raise ValueError("ascending must be a bool or one bool per key")
 
-    cols = X[:, keys].astype(float).T                     # (m, n_rows)
-    cols = np.where(asc[:, None], cols, -cols)            # flip descending keys
+    # One key per sort column (m is small, so this loop is over keys, not data).
+    cols = [_order_key(X[:, k], not up) for k, up in zip(keys, asc)]
     # np.lexsort treats the LAST key as primary, so reverse the priority.
     order = np.lexsort(cols[::-1])
     X_sorted = X[order]
@@ -147,10 +163,12 @@ def multikey_sort(X, keys, ascending=True, return_indices=False):
 def topk(values, k, largest=True, return_indices=True, axis=-1):
     """Select the k largest (or smallest) elements along an axis.
 
-    Uses ``np.argpartition`` (average O(n)) and then sorts only the
-    k selected elements. Output is ordered best-first; equal values are
-    ordered by their original index. NaNs are treated as missing and are
-    selected only after every finite value.
+    Uses ``np.argpartition`` (average O(n)) to find the k-th best value,
+    selects everything better than it, fills the remaining places with
+    tied values in index order, and then sorts only the k selected items.
+    Output is ordered best-first; equal values are selected and ordered by
+    their original index, so the result is deterministic. NaNs are treated
+    as missing and are selected only after every other value (including inf).
 
     Parameters
     ----------
@@ -193,20 +211,38 @@ def topk(values, k, largest=True, return_indices=True, axis=-1):
     if not 0 <= k <= n:
         raise ValueError(f"k must be in [0, {n}], got {k}")
 
-    # Score so that "best" is always the smallest; NaN becomes worst (+inf).
-    score = arr.astype(float)
-    if largest:
-        score = -score
-    score = np.where(np.isnan(score), np.inf, score)
-
-    if k == 0:
-        idx = np.empty(arr.shape[:-1] + (0,), dtype=np.intp)
+    # Elements are ranked by (is_nan, score, index): "best" is always the smallest.
+    score = _order_key(arr, largest)
+    if np.issubdtype(score.dtype, np.floating):
+        is_nan = np.isnan(score)
+        filled = np.where(is_nan, np.inf, score) if is_nan.any() else score
     else:
-        part = np.argpartition(score, k - 1, axis=-1)[..., :k]
-        part_score = np.take_along_axis(score, part, axis=-1)
-        # Order selected items by score, then by original index for ties.
-        order = np.lexsort((part, part_score), axis=-1)
-        idx = np.take_along_axis(part, order, axis=-1)
+        is_nan = np.zeros(score.shape, dtype=bool)
+        filled = score
+
+    batch = arr.shape[:-1]
+    if k == 0:
+        idx = np.empty(batch + (0,), dtype=np.intp)
+    else:
+        n_valid = np.count_nonzero(~is_nan, axis=-1, keepdims=True)
+        # Score of the k-th best element (value is exact even if +inf ties NaN).
+        kth_pos = np.argpartition(filled, k - 1, axis=-1)[..., k - 1:k]
+        kth = np.take_along_axis(filled, kth_pos, axis=-1)
+        kth_is_nan = k > n_valid                       # the k-th best is a NaN
+        better = np.where(kth_is_nan, ~is_nan, ~is_nan & (score < kth))
+        tied = np.where(kth_is_nan, is_nan, ~is_nan & (score == kth))
+        # Among ties at the boundary, keep the ones with the smallest index.
+        need = k - np.count_nonzero(better, axis=-1, keepdims=True)
+        if np.all(np.count_nonzero(tied, axis=-1, keepdims=True) == need):
+            chosen = better | tied                     # no extra ties: skip cumsum
+        else:
+            chosen = better | (tied & (np.cumsum(tied, axis=-1) <= need))
+        # Exactly k chosen per slice; np.nonzero lists them in index order.
+        sel = np.nonzero(chosen)[-1].reshape(batch + (k,))
+        sel_score = np.take_along_axis(filled, sel, axis=-1)
+        sel_nan = np.take_along_axis(is_nan, sel, axis=-1)
+        order = np.lexsort((sel, sel_score, sel_nan), axis=-1)
+        idx = np.take_along_axis(sel, order, axis=-1)
 
     top = np.take_along_axis(arr, idx, axis=-1)
     top, idx = np.moveaxis(top, -1, axis), np.moveaxis(idx, -1, axis)

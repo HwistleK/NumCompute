@@ -105,10 +105,14 @@ def percentile(data, q, interpolation="linear", axis=None):
     ``pos = q / 100 * (n - 1)``, between ``i = floor(pos)`` and
     ``j = ceil(pos)``:
 
-    - 'linear'  : v[i] + (pos - i) * (v[j] - v[i])
+    - 'linear'  : (1 - t) * v[i] + t * v[j], with t = pos - i
     - 'lower'   : v[i]
     - 'higher'  : v[j]
     - 'midpoint': (v[i] + v[j]) / 2
+
+    The weighted form never overflows for finite data and handles +-inf
+    (e.g. any interpolation towards +inf is +inf); only an interpolation
+    between -inf and +inf is undefined and returns NaN.
 
     Parameters
     ----------
@@ -169,13 +173,14 @@ def percentile(data, q, interpolation="linear", axis=None):
         res = v_lo
     elif interpolation == "higher":
         res = v_hi
-    elif interpolation == "midpoint":
-        res = np.where(lo == hi, v_lo, 0.5 * (v_lo + v_hi))
     else:
-        frac = pos - lo
-        # Skip arithmetic when lo == hi so that inf values do not become NaN.
-        with np.errstate(invalid="ignore"):
-            res = np.where(frac == 0, v_lo, v_lo + frac * (v_hi - v_lo))
+        t = 0.5 if interpolation == "midpoint" else pos - lo
+        # (1 - t) * a + t * b avoids the overflow of b - a for huge finite
+        # values and gives the right limit for +-inf. Only a = -inf, b = +inf
+        # is undefined (NaN). Clipping to [a, b] removes rounding past the ends.
+        with np.errstate(invalid="ignore", over="ignore"):
+            mixed = np.clip((1 - t) * v_lo + t * v_hi, v_lo, v_hi)
+        res = np.where((lo == hi) | (v_lo == v_hi), v_lo, mixed)
 
     res = np.where((n_valid == 0)[..., None], np.nan, res)
     res = np.moveaxis(res, -1, 0)                      # q axis first
