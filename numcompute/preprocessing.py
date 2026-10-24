@@ -41,11 +41,11 @@ class StandardScaler:
         """
         
         arr = to_numeric(X, "X")
-        self.mean = np.mean(arr, axis=0)
+        self.mean_ = np.mean(arr, axis=0)
         std = np.std(arr, axis=0)
         
         #Avoid zero division when std is 0
-        self.scale = np.where(std==0.0, 1.0, std)
+        self.scale_ = np.where(std==0.0, 1.0, std)
         
         return self
     
@@ -136,7 +136,7 @@ class OneHotEncoder:
             arr = arr[:, None]
         #Initiate encoded matrix
         encoded_cols = []
-        for i, catgs in self.categories_:
+        for i, catgs in enumerate(self.categories_):
             col = arr[:,i]
             
             #Create a boolean matrix for broadcasting
@@ -144,7 +144,7 @@ class OneHotEncoder:
             encoded_cols.append(encoded)
         return np.hstack(encoded_cols)
     
-    def fit_tranform(self, X):
+    def fit_transform(self, X):
         """Fit to data, then transform it."""
         return self.fit(X).transform(X)
     
@@ -167,9 +167,9 @@ class SimpleImputer:
         """Compute imputaion statistics."""
         arr = to_numeric(X, "X")
         if self.strategy == "mean":
-            self.statisitics_ = np.nanmean(arr, axis=0)
+            self.statistics_ = np.nanmean(arr, axis=0)
         elif self.strategy == "median":
-            self.statisitics_ = np.nanmedian(arr, axis=0)
+            self.statistics_ = np.nanmedian(arr, axis=0)
         elif self.strategy == "constant":
             if self.fill_value is None:
                 raise ValueError("fill_value must be specified as strategy is 'constant'")

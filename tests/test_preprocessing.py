@@ -34,7 +34,7 @@ def test_minmax_scaler():
 def test_onehot_encoder():
     X = np.array([[2, 2], [1, 3], [2, 3]])
     encoder = OneHotEncoder()
-    encoded_X = encoder.fit_tranform(X)
+    encoded_X = encoder.fit_transform(X)
     assert encoded_X.shape == (3, 4)
     assert np.all(encoded_X.sum(axis=1) == 2.0)
     
