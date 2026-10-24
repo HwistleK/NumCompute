@@ -46,7 +46,7 @@ def test_load_csv_missing_values(tmp_path):
         [np.nan, 2.0, 3.0],
         [4.0, np.nan, 6.0]])
     
-    assert np.array_equal(arr[:2, :2], expected_arr, equal_nan=True)
+    assert np.array_equal(arr, expected_arr, equal_nan=True)
         
 def test_load_csv_typeerror(tmp_path):
     #An unvalid input path raises TypeError
