@@ -57,3 +57,15 @@ def test_quantiles():
 def test_quantiles_reject_invalid_values():
     with np.testing.assert_raises(ValueError):
         quantiles([1, 2, 3], 1.5)
+
+
+def test_statistics_all_equal():
+    values = [5, 5, 5]
+    assert mean(values) == 5
+    assert std(values) == 0
+
+
+def test_statistics_non_contiguous():
+    values = np.arange(10.0)[::2]
+    assert mean(values) == 4
+    assert quantiles(values, 0.5) == 4

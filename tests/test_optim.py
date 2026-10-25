@@ -28,3 +28,14 @@ def test_invalid_method_and_step():
         grad(lambda x: x[0], [1.0], method="backward")
     with pytest.raises(ValueError):
         grad(lambda x: x[0], [1.0], h=0)
+
+
+def test_grad_empty_input():
+    result = grad(lambda x: np.sum(x ** 2), np.array([]))
+    assert result.shape == (0,)
+
+
+def test_grad_non_contiguous_input():
+    values = np.arange(6.0)[::2]
+    result = grad(lambda x: np.sum(x ** 2), values)
+    assert np.allclose(result, 2 * values)

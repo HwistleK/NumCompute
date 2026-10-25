@@ -35,3 +35,15 @@ def test_mse():
 def test_metrics_reject_different_lengths():
     with pytest.raises(ValueError):
         accuracy([1, 2], [1])
+
+
+def test_metrics_empty_inputs():
+    with pytest.raises(ValueError):
+        accuracy([], [])
+    with pytest.raises(ValueError):
+        mse([], [])
+
+
+def test_metrics_all_predictions_equal():
+    assert accuracy([1, 1, 1], [1, 1, 1]) == 1.0
+    assert confusion_matrix([1, 1, 1], [1, 1, 1]).tolist() == [[3]]
