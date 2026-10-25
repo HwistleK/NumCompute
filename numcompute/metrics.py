@@ -22,7 +22,23 @@ def _check_inputs(y_true, y_pred):
 
 
 def accuracy(y_true, y_pred):
-    """Return the proportion of correct predictions."""
+    """Return the proportion of correct predictions.
+
+    Parameters
+    ----------
+    y_true, y_pred : array_like, shape (n_samples,)
+        True and predicted labels.
+
+    Returns
+    -------
+    float
+        Fraction of matching labels.
+
+    Raises
+    ------
+    ValueError
+        If the inputs have different lengths or are empty.
+    """
     true, pred = _check_inputs(y_true, y_pred)
     if true.size == 0:
         raise ValueError("cannot calculate accuracy for empty data")
@@ -30,7 +46,26 @@ def accuracy(y_true, y_pred):
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
-    """Return a confusion matrix with rows for true labels."""
+    """Return a confusion matrix with rows for true labels.
+
+    Parameters
+    ----------
+    y_true, y_pred : array_like, shape (n_samples,)
+        True and predicted labels.
+    labels : array_like or None, default=None
+        Labels to include and their row/column order. If None, labels are
+        inferred from both inputs.
+
+    Returns
+    -------
+    ndarray, shape (n_classes, n_classes)
+        Counts with true labels on rows and predicted labels on columns.
+
+    Raises
+    ------
+    ValueError
+        If the inputs have different lengths.
+    """
     true, pred = _check_inputs(y_true, y_pred)
     if labels is None:
         labels = np.unique(np.concatenate((true, pred)))
@@ -45,7 +80,21 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
 
 def precision(y_true, y_pred, positive_label=1):
-    """Return binary precision for the selected positive label."""
+    """Return binary precision for the selected positive label.
+
+    Parameters
+    ----------
+    y_true, y_pred : array_like, shape (n_samples,)
+        True and predicted labels.
+    positive_label : scalar, default=1
+        Label treated as positive.
+
+    Returns
+    -------
+    float
+        True positives divided by predicted positives, or 0.0 when the
+        denominator is zero.
+    """
     true, pred = _check_inputs(y_true, y_pred)
     true_positive = np.sum((true == positive_label) & (pred == positive_label))
     false_positive = np.sum((true != positive_label) & (pred == positive_label))
@@ -54,7 +103,21 @@ def precision(y_true, y_pred, positive_label=1):
 
 
 def recall(y_true, y_pred, positive_label=1):
-    """Return binary recall for the selected positive label."""
+    """Return binary recall for the selected positive label.
+
+    Parameters
+    ----------
+    y_true, y_pred : array_like, shape (n_samples,)
+        True and predicted labels.
+    positive_label : scalar, default=1
+        Label treated as positive.
+
+    Returns
+    -------
+    float
+        True positives divided by actual positives, or 0.0 when the
+        denominator is zero.
+    """
     true, pred = _check_inputs(y_true, y_pred)
     true_positive = np.sum((true == positive_label) & (pred == positive_label))
     false_negative = np.sum((true == positive_label) & (pred != positive_label))
@@ -63,14 +126,43 @@ def recall(y_true, y_pred, positive_label=1):
 
 
 def f1(y_true, y_pred, positive_label=1):
-    """Return the binary F1 score for the selected positive label."""
+    """Return the binary F1 score for the selected positive label.
+
+    Parameters
+    ----------
+    y_true, y_pred : array_like, shape (n_samples,)
+        True and predicted labels.
+    positive_label : scalar, default=1
+        Label treated as positive.
+
+    Returns
+    -------
+    float
+        Harmonic mean of precision and recall, or 0.0 when both are zero.
+    """
     p = precision(y_true, y_pred, positive_label)
     r = recall(y_true, y_pred, positive_label)
     return 0.0 if p + r == 0 else 2 * p * r / (p + r)
 
 
 def mse(y_true, y_pred):
-    """Return the mean squared error."""
+    """Return the mean squared error.
+
+    Parameters
+    ----------
+    y_true, y_pred : array_like, shape (n_samples,)
+        True and predicted numeric values.
+
+    Returns
+    -------
+    float
+        Mean of the squared prediction errors.
+
+    Raises
+    ------
+    ValueError
+        If the inputs have different lengths or are empty.
+    """
     true, pred = _check_inputs(y_true, y_pred)
     if true.size == 0:
         raise ValueError("cannot calculate MSE for empty data")
