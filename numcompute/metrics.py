@@ -73,9 +73,15 @@ def confusion_matrix(y_true, y_pred, labels=None):
         labels = np.asarray(labels)
 
     matrix = np.zeros((len(labels), len(labels)), dtype=int)
-    for i, true_label in enumerate(labels):
-        for j, pred_label in enumerate(labels):
-            matrix[i, j] = np.sum((true == true_label) & (pred == pred_label))
+    if len(labels) == 0:
+        return matrix
+
+    true_matches = true[:, None] == labels
+    pred_matches = pred[:, None] == labels
+    true_indices = np.argmax(true_matches, axis=1)
+    pred_indices = np.argmax(pred_matches, axis=1)
+    known = true_matches.any(axis=1) & pred_matches.any(axis=1)
+    np.add.at(matrix, (true_indices[known], pred_indices[known]), 1)
     return matrix
 
 
