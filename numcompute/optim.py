@@ -86,6 +86,10 @@ def jacobian(F, x, h=1e-5, method="central"):
     Time: O(n) function evaluations for n input values.
     Space: O(n + output_size).
     """
+    _check_step(h)
+    if method not in ("central", "forward"):
+        raise ValueError("method must be 'central' or 'forward'")
+
     x = np.asarray(x, dtype=float)
     base = np.asarray(F(x), dtype=float)
     result = np.empty(base.shape + x.shape, dtype=float)
@@ -95,10 +99,8 @@ def jacobian(F, x, h=1e-5, method="central"):
         step[index] = h
         if method == "central":
             difference = (np.asarray(F(x + step)) - np.asarray(F(x - step))) / (2 * h)
-        elif method == "forward":
-            difference = (np.asarray(F(x + step)) - base) / h
         else:
-            raise ValueError("method must be 'central' or 'forward'")
+            difference = (np.asarray(F(x + step)) - base) / h
         result[(...,) + index] = difference
 
     return result

@@ -28,6 +28,8 @@ def test_invalid_method_and_step():
         grad(lambda x: x[0], [1.0], method="backward")
     with pytest.raises(ValueError):
         grad(lambda x: x[0], [1.0], h=0)
+    with pytest.raises(ValueError):
+        jacobian(lambda x: x ** 2, [1.0], h=0)
 
 
 def test_grad_empty_input():
