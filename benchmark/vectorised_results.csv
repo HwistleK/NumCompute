@@ -1,0 +1,5 @@
+operation,n,time_ms,repeats,seed,method,cpu,ram_gb,os,python,numpy
+StandardScaler,10000,0.015042,5,42,"time.perf_counter, best of repeats",arm,16.0,Darwin 25.1.0,3.13,2.5.0
+top-k,10000,0.210708,5,42,"time.perf_counter, best of repeats",arm,16.0,Darwin 25.1.0,3.13,2.5.0
+rank,10000,0.637042,5,42,"time.perf_counter, best of repeats",arm,16.0,Darwin 25.1.0,3.13,2.5.0
+histogram,10000,0.094958,5,42,"time.perf_counter, best of repeats",arm,16.0,Darwin 25.1.0,3.13,2.5.0

@@ -4,4 +4,5 @@ from .sort_search import *
 from .pipeline import *
 from .stats import *
 from .preprocessing import *
-
+from .metrics import *
+from .optim import *
