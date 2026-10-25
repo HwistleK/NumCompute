@@ -11,9 +11,10 @@ def test_euclidean_distance():
 def test_sigmoid():
     x = np.array([0.0, 100.0, -100.0])
     s = sigmoid(x)
-    assert np.allclose(s[0], 0.5)
-    assert s[1] == 1.0
-    assert s[2] == 0.0
+    
+    assert np.isclose(s[0], 0.5)
+    assert np.isclose(s[1], 1.0)
+    assert np.isclose(s[2], 0.0)
 
 def test_softmax():
     x = np.array([1.0, 2.0, 3.0])

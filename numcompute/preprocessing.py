@@ -30,7 +30,7 @@ class StandardScaler:
         self.mean_ = None
         self.scale_ = None
         
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Compute mean and standard deviation to be used later for scaling.
         ____________
         Parameters:
@@ -63,7 +63,7 @@ class StandardScaler:
         
         return (arr - self.mean_) / self.scale_
         
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
         return self.fit(X).transform(X)
         
@@ -81,7 +81,7 @@ class MinMaxScaler:
         self.scale_ = None
         self.feature_range = feature_range
         
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Compute the minimum and maximum to be used later for scaling."""
         arr = to_numeric(X, "X")
         minimum = np.min(arr, axis=0)
@@ -102,7 +102,7 @@ class MinMaxScaler:
         arr = to_numeric(X, "X")
         return arr * self.scale_ + self.min_
     
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
         return self.fit(X).transform(X)
     
@@ -118,7 +118,7 @@ class OneHotEncoder:
     def __init__(self):
         self.categories_ = []
         
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit a OneHotEncoder to X."""
         arr = np.asarray(X)
         if arr.ndim == 1:
@@ -144,7 +144,7 @@ class OneHotEncoder:
             encoded_cols.append(encoded)
         return np.hstack(encoded_cols)
     
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Fit to data, then transform it."""
         return self.fit(X).transform(X)
     
@@ -163,7 +163,7 @@ class SimpleImputer:
         self.fill_value = fill_value
         self.statistics_ = None
     
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Compute imputaion statistics."""
         arr = to_numeric(X, "X")
         if self.strategy == "mean":
@@ -178,15 +178,15 @@ class SimpleImputer:
     
     def transform(self, X):
         """Impure missing values in X."""
-        if self.statisitics_ is None:
+        if self.statistics_ is None:
             raise ValueError("SimpleImputer class instance is not fitted yet!")
         arr = to_numeric(X, "X").copy()
         mask = np.isnan(arr)
         if mask.any():
             rows, cols = np.nonzero(mask)
-            arr[rows, cols] = self.statisitics_[cols]
+            arr[rows, cols] = self.statistics_[cols]
         return arr
     
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         """Fit to data , then transform it."""
         return self.fit(X).transform(X)
