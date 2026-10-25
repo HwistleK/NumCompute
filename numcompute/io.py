@@ -1,6 +1,7 @@
 """CSV loading with delimiter support and missing value handling: Load data in Numpy arrays
 """
 import numpy as np
+import os
  
 __all__ = ["load_csv"]
 
@@ -27,9 +28,21 @@ def load_csv(filepath, delimiter=",", skiprows=0,  missing_values="", filling_va
         Space : O(n_rows * n_cols)
     """
     
-    if not isinstance(filepath, (str, bytes)):
+    if not isinstance(filepath, (str, bytes, os.PathLike)):
         raise TypeError(f"Filepath must be a string or path-like, got {type(filepath).__name__} instead.")
     try:
+        if np.issubdtype(np.dtype(dtype), np.number):
+            missing = {missing_values} if isinstance(missing_values, str) else set(missing_values or [])
+            with open(filepath, "r") as file:
+                for line in list(file)[skiprows:]:
+                    for value in line.rstrip("\n").split(delimiter):
+                        value = value.strip()
+                        if value in missing or value == "":
+                            continue
+                        try:
+                            np.asarray(value, dtype=dtype)
+                        except (TypeError, ValueError):
+                            raise ValueError(f"Could not convert {value!r} to {dtype}.")
         arr = np.genfromtxt(
             filepath,
             delimiter=delimiter,

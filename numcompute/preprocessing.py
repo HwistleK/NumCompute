@@ -178,13 +178,13 @@ class SimpleImputer:
     
     def transform(self, X):
         """Impure missing values in X."""
-        if self.statisitics_ is None:
+        if self.statistics_ is None:
             raise ValueError("SimpleImputer class instance is not fitted yet!")
         arr = to_numeric(X, "X").copy()
         mask = np.isnan(arr)
         if mask.any():
             rows, cols = np.nonzero(mask)
-            arr[rows, cols] = self.statisitics_[cols]
+            arr[rows, cols] = self.statistics_[cols]
         return arr
     
     def fit_transform(self, X):
