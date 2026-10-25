@@ -33,3 +33,19 @@ def test_pipeline_predict():
     ])
     preds = pipe.fit(X).predict(X)
     assert preds.tolist() == [2, 4, 6]
+    
+def test_full_pipeline_workflow():
+    """Test an end-to-end pipeline combining SimpleImputer and MinMaxScaler."""
+    X = np.array([[1.0, np.nan], [3.0, 4.0], [5.0, 6.0]])
+    from numcompute.preprocessing import SimpleImputer, MinMaxScaler
+    
+    pipe = Pipeline([
+        ('impute', SimpleImputer(strategy="mean")),
+        ('scale', MinMaxScaler(feature_range=(0.0, 1.0)))
+    ])
+    
+    Xt = pipe.fit_transform(X)
+    assert Xt.shape == (3, 2)
+    assert not np.isnan(Xt).any()
+    assert np.allclose(Xt.min(), 0.0)
+    assert np.allclose(Xt.max(), 1.0)

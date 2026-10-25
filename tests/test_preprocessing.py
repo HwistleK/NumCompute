@@ -51,5 +51,18 @@ def test_preprocessing_not_fitted_error():
     with pytest.raises(ValueError):
         scaler.transform([1, 2])
     
-        
-    
+def test_preprocessing_constant_column():
+    """Test StandardScaler behavior with a constant feature column (zero variance)."""
+    X_const = np.array([[5.0, 1.0], [5.0, 2.0], [5.0, 3.0]])
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(X_const)
+    assert not np.isnan(scaled).any()
+    assert np.allclose(scaled[:, 0], 0.0)
+
+def test_simple_imputer_median():
+    """Test SimpleImputer using the median strategy with NaN values."""
+    X_nan = np.array([[1.0, np.nan], [2.0, 2.0], [10.0, 3.0]])
+    imputer = SimpleImputer(strategy="median")
+    imputed = imputer.fit_transform(X_nan)
+    assert not np.isnan(imputed).any()
+    assert imputed[0, 1] == 2.5
