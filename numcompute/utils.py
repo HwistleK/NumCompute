@@ -3,7 +3,7 @@ Fully vectorised using Numpy (no python loops).
 """
 import numpy as np
 
-def eucledian_distance(x, y):
+def euclidean_distance(x, y):
     """Compute eucledian distances between vectors/matrices."""
     x_arr = np.asarray(x, dtype=float)
     y_arr = np.asarray(y, dtype=float)

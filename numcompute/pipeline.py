@@ -1,5 +1,5 @@
-"""Pipeline abstraction for chaining ransformers and estimators.
-Provides Transfomer and Estimator base classes, and a Pipeline class.
+"""Pipeline abstraction for chaining transformers and estimators.
+Provides Transformer and Estimator base classes, and a Pipeline class.
 """
 import numpy as np
 
@@ -60,7 +60,7 @@ class Pipeline:
                 step.fit(Xt, y)
         return self
     
-    def tranform(self, X, y=None):
+    def transform(self, X, y=None):
         """Fit all steps and transform data."""
         Xt = X
         for name, step in self.steps:
